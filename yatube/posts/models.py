@@ -49,7 +49,7 @@ class Group(models.Model):
     """Создание модели Group."""
 
     title = models.CharField(
-        'Заголовок', 
+        'Заголовок',
         max_length=200,
         help_text='Заголовок группы.'
     )

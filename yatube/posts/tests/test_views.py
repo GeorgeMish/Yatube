@@ -173,13 +173,13 @@ class PostsPagesTest(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_post_appeared_on_the_wrong_groups_page(self):
-        """Пост не улетает в другую группу."""
+        """Пост не сохраняется в другой группе."""
         group_2 = f'/group/{self.group_2.slug}/'
         response = self.authorized_client.get(group_2)
         self.assertNotIn(self.post, response.context['page_obj'])
 
     def test_post_appeared_on_the_groups_page(self):
-        """Пост улетает в нужную группу."""
+        """Пост сохраняется в нужной группе."""
         group = f'/group/{self.group.slug}/'
         response = self.authorized_client.get(group)
         self.assertIn(self.post, response.context['page_obj'])
