@@ -1,11 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
 
 from .models import Post, Group, User
 from .forms import PostForm, CommentForm
 from .utils import get_page_context
+from . import constants
 
 
+@cache_page(constants.CASH_TIME_FOR_INDEX_PAGE_IN_SECONDS)
 def index(request):
     """Выводит шаблон главной страницы."""
     post_list = Post.objects.select_related('author', 'group')
@@ -114,4 +117,9 @@ def add_comment(request, post_id):
         comment.author = request.user
         comment.post = post_object
         comment.save()
-    return redirect('posts:post_detail', post_id=post_id)
+        return redirect('posts:post_detail', post_id=post_id)
+    context = {
+        'form': form,
+        'post': post_object
+    }
+    return render(request, 'posts/create_post.html', context)

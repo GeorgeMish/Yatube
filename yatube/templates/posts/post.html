@@ -1,19 +1,28 @@
 {% load thumbnail %}
-
+<style>
+body {
+  font-family: Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  }
+</style>
 <article>
 <ul>
   <li>
     Автор: {{ post.author.get_full_name }}
+    <a href="{% url 'posts:profile' post.author %}"><br>
+      все посты пользователя
+    </a>
   </li>
     <li>
       Дата публикации: {{ post.pub_date|date:"d E Y" }}
     </li>
+    <p>
+      {{ post.text|linebreaksbr }}
+    </p>
       <a href="{% url 'posts:post_detail' post.id %}">Подробная информация</a><br>
     {% if post.group is not group %}   
       <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
       {% endif %}
 </ul>
-<p>
-  {{ post.text|linebreaksbr }}    
-</p>
 </article>

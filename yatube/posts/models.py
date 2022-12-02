@@ -10,12 +10,12 @@ class Post(models.Model):
     """Создание модели Post."""
 
     text = models.TextField(
-            'Текст поста',
-            help_text='Введите текст поста'
+        'Текст поста',
+        help_text='Введите текст поста'
     )
     pub_date = models.DateTimeField(
-            'Дата публикации',
-            auto_now_add=True)
+        'Дата публикации',
+        auto_now_add=True)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -48,10 +48,17 @@ class Post(models.Model):
 class Group(models.Model):
     """Создание модели Group."""
 
-    title = models.CharField('Заголовок', max_length=200,
-                             help_text='Заголовок группы.')
-    slug = models.SlugField('URL', max_length=200, unique=True,
-                            help_text='Уникальный фрагмент адреса.')
+    title = models.CharField(
+        'Заголовок', 
+        max_length=200,
+        help_text='Заголовок группы.'
+    )
+    slug = models.SlugField(
+        'URL',
+        max_length=200,
+        unique=True,
+        help_text='Уникальный фрагмент адреса.'
+    )
     description = models.TextField('Содержание')
 
     def __str__(self):
@@ -64,22 +71,52 @@ class Comment(models.Model):
 
     post = models.ForeignKey(
         Post,
+        blank=True,
+        null=True,
         on_delete=models.CASCADE,
-        related_name='comments')
+        related_name='comments',
+        verbose_name='Пост'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments')
-
-    text = models.TextField('Текст комментария',
-                            help_text='Введите текст комментария'
-                            )
+        related_name='comments',
+        verbose_name='Имя автора'
+    )
+    text = models.TextField(
+        verbose_name='Комментарий',
+        help_text='Введите текст комментария'
+    )
     created = models.DateTimeField('Дата', auto_now_add=True)
 
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
         ordering = ('-created',)
+
+    def __str__(self):
+        """Строковое представление объекта."""
+        return self.text[:constants.SYMBOLS_IN_SELF_TEXT]
+
+
+class Follow(models.Model):
+    """Создание модели Follow"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following'
+    )
+
+    class Meta:
+        verbose_name = 'Подписчик'
+        verbose_name_plural = 'Подписчикии'
 
     def __str__(self):
         """Строковое представление объекта."""
