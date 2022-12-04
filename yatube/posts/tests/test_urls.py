@@ -41,7 +41,7 @@ class TaskURLTests(TestCase):
             f'/posts/{self.post.id}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
             f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
-          #  f'posts/{self.post.id}/comment/': 'posts/includes/comment.html',
+            #  f'posts/{self.post.id}/comment/': 'posts/includes/comment.html',
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):

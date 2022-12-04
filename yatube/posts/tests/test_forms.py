@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.core.cache import cache
 from http import HTTPStatus
 
-from ..models import Post, Group, Comment
+from ..models import Post, Group
 from ..forms import PostForm
 
 from ..utils import uploaded_img
