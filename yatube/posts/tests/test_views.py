@@ -1,15 +1,14 @@
-import shutil
-import tempfile
-
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.conf import settings
 from django import forms
+import shutil
+import tempfile
 
 from ..import constants
-from ..models import Group, Post
+from ..models import Group, Post, User, Follow
 
 from ..utils import uploaded_img
 
@@ -46,6 +45,7 @@ class PostsViewTests(TestCase):
 
     def test_pages_uses_correct_template(self):
         """Проверка шаблона при вызове views через пространство имен."""
+        cache.clear()
         reverse_names_templates = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:post_create'): 'posts/create_post.html',
@@ -96,6 +96,7 @@ class PostsPagesTest(TestCase):
 
     def test_index_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:index'))
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.text, self.post.text)
@@ -106,6 +107,7 @@ class PostsPagesTest(TestCase):
 
     def test_group_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:group_list',
                                               kwargs={'slug':
                                                       self.group.slug}))
@@ -122,6 +124,7 @@ class PostsPagesTest(TestCase):
 
     def test_profile_show_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:profile',
                                               kwargs={'username':
                                                       self.post.author.username
@@ -145,6 +148,7 @@ class PostsPagesTest(TestCase):
 
     def test_post_create_page_show_correct_context(self):
         """Шаблон post_create сформирован с правильным контекстом."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:post_create'))
         form_fields = {
             'text': forms.fields.CharField,
@@ -158,6 +162,7 @@ class PostsPagesTest(TestCase):
 
     def test_post_edit_page_show_correct_context(self):
         """Шаблон post_edit сформирован с правильным контекстом."""
+        cache.clear()
         response = self.authorized_client.get(reverse(
             'posts:post_edit',
             kwargs={'post_id': f'{self.post.id}'}))
@@ -174,18 +179,21 @@ class PostsPagesTest(TestCase):
 
     def test_post_appeared_on_the_wrong_groups_page(self):
         """Пост не сохраняется в другой группе."""
+        cache.clear()
         group_2 = f'/group/{self.group_2.slug}/'
         response = self.authorized_client.get(group_2)
         self.assertNotIn(self.post, response.context['page_obj'])
 
     def test_post_appeared_on_the_groups_page(self):
         """Пост сохраняется в нужной группе."""
+        cache.clear()
         group = f'/group/{self.group.slug}/'
         response = self.authorized_client.get(group)
         self.assertIn(self.post, response.context['page_obj'])
 
     def test_first_post_appeared_on_the_index_page(self):
         """Пост при создании попадает на 1ю позицию на главной странице."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:index'))
         first_post = Post.objects.first()
         self.assertEqual(response.context['page_obj'][0],
@@ -193,6 +201,7 @@ class PostsPagesTest(TestCase):
 
     def test_first_post_appeared_on_the_group_page(self):
         """Пост при создании попадает на 1ю позицию на странице группы."""
+        cache.clear()
         group_page = f'/group/{self.group.slug}/'
         response = self.authorized_client.get(group_page)
         first_post = Post.objects.first()
@@ -201,6 +210,7 @@ class PostsPagesTest(TestCase):
 
     def test_first_post_appeared_on_the_profile_page(self):
         """Пост при создании попадает на 1ю позицию на странице профиля."""
+        cache.clear()
         profile_page = f'/profile/{self.user.username}/'
         response = self.authorized_client.get(profile_page)
         first_post = Post.objects.first()
@@ -251,6 +261,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_page_contains_ten_records(self):
         """Проверит количество постов на первой странице."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertEqual(len(response.context['page_obj']),
                             (constants.POSTS_PER_PAGE)
@@ -258,6 +269,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_second_page_contains_three_records(self):
         """Проверит количество постов на второй странице."""
+        cache.clear()
         response = self.authorized_client.get(reverse(
             'posts:index') + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
@@ -266,6 +278,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_group_page_contains_ten_records(self):
         """Проверит количество постов на странице группы."""
+        cache.clear()
         group_page = f'/group/{self.group.slug}/'
         response = self.authorized_client.get(group_page)
         self.assertEqual(len(response.context['page_obj']),
@@ -274,6 +287,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_second_group_page_contains_three_records(self):
         """Проверит количество постов на 2й странице группы."""
+        cache.clear()
         group_page = f'/group/{self.group.slug}/'
         response = self.authorized_client.get((group_page) + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
@@ -282,6 +296,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_profile_page_contains_ten_records(self):
         """Проверит количество постов на странице профиля."""
+        cache.clear()
         profile_page = f'/profile/{self.user.username}/'
         response = self.authorized_client.get(profile_page)
         self.assertEqual(len(response.context['page_obj']),
@@ -290,8 +305,64 @@ class PaginatorViewsTest(TestCase):
 
     def test_second_profile_page_contains_three_records(self):
         """Проверит количество постов на 2й странице профиля."""
+        cache.clear()
         profile_page = f'/profile/{self.user.username}/'
         response = self.authorized_client.get((profile_page) + '?page=2')
         self.assertEqual(len(response.context['page_obj']),
                             (constants.POSTS_PER_SECOND_PAGE),
                          )
+
+
+class FollowTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_follower = User.objects.create_user(username='user')
+        cls.user_following = User.objects.create_user(username='user_1')
+        cls.post = Post.objects.create(
+            author=cls.user_following,
+            text='Тестовый текст',
+        )
+
+    def setUp(self):
+        self.following_client = Client()
+        self.follower_client = Client()
+        self.following_client.force_login(self.user_following)
+        self.follower_client.force_login(self.user_follower)
+
+    def test_follow(self):
+        """Зарегистрированный пользователь может подписываться."""
+        follower_count = Follow.objects.count()
+        self.follower_client.get(reverse(
+            'posts:profile_follow',
+            args=(self.user_following.username,)))
+        self.assertEqual(Follow.objects.count(), follower_count + 1)
+
+    def test_unfollow(self):
+        """Зарегистрированный пользователь может отписаться."""
+        Follow.objects.create(
+            user=self.user_follower,
+            author=self.user_following
+        )
+        follower_count = Follow.objects.count()
+        self.follower_client.get(reverse(
+            'posts:profile_unfollow',
+            args=(self.user_following.username,)))
+        self.assertEqual(Follow.objects.count(), follower_count - 1)
+
+    def test_new_post_see_follower(self):
+        """Пост появляется в ленте подписавшихся."""
+        posts = Post.objects.create(
+            text=self.post.text,
+            author=self.user_following,
+        )
+        follow = Follow.objects.create(
+            user=self.user_follower,
+            author=self.user_following
+        )
+        response = self.follower_client.get(reverse('posts:follow_index'))
+        post = response.context['page_obj'][0]
+        self.assertEqual(post, posts)
+        follow.delete()
+        response_2 = self.follower_client.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response_2.context['page_obj']), 0)

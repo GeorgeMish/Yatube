@@ -3,8 +3,10 @@ import tempfile
 
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.core.cache import cache
+from http import HTTPStatus
 
 from ..models import Post, Group, Comment
 from ..forms import PostForm
@@ -16,70 +18,73 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 User = get_user_model()
 
 
-class PostFormTest(TestCase):
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+class PostCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create(username='test_user')
+        cls.user = User.objects.create(username='auth')
+        cls.group = Group.objects.create(
+            title='Тестовое название',
+            slug='test-slug',
+        )
+        cls.group_new = Group.objects.create(
+            title='Тестовое название1',
+            slug='slug2',
+        )
+        cls.small_gif = uploaded_img
         cls.post = Post.objects.create(
             author=cls.user,
-            text='test post',
-            image=uploaded_img,
+            text='Тестовый текст',
+            group=cls.group,
         )
         cls.form = PostForm()
-        cls.group_1 = Group.objects.create(
-            title='test title 1',
-            slug='23',
-            description='test description 1',
-        )
-        cls.group_2 = Group.objects.create(
-            title='test title 2',
-            slug='25',
-            description='Теst description 2',
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(PostCreateFormTests.user)
 
     def test_authorized_client_post_create(self):
         """Публикация поста авторизованным пользователем."""
+        cache.clear()
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'test post',
-            'group': self.group_1.pk,
-            'image': uploaded_img,
+            'text': self.post.text,
+            'group': self.group.pk,
+            'image': uploaded_img
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
-        last_post = Post.objects.first()
         self.assertRedirects(response, reverse(
-            'posts:profile',
-            kwargs={'username': f'{self.user.username}'}))
+            'posts:profile', args=(self.user.username,),))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        last_post_data = ((last_post.text, form_data.get('text')),
-                          (last_post.group.title, self.group_1.title),
-                          (last_post.author, self.user),
-                          (last_post.image, self.image)
-                          )
-        for value, expected in last_post_data:
-            with self.subTest(value=value):
-                self.assertEqual(value, expected)
+        post = Post.objects.first()
+        check_post_fields = (
+            (post.author, self.post.author),
+            (post.text, self.post.text),
+            (post.group, self.post.group),
+            (post.image, f'posts/{uploaded_img}'),
+        )
+        for new_post, expected in check_post_fields:
+            with self.subTest(new_post=expected):
+                self.assertEqual(new_post, expected)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_authorized_client_post_edit(self):
         """Изменение поста авторизованным пользователем."""
+        cache.clear()
         posts_count = Post.objects.count()
         form_data = {
             'text': 'test post edit post',
-            'group': self.group_2.pk,
+            'group': self.group_new.pk,
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit',
@@ -94,7 +99,7 @@ class PostFormTest(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
         last_edit_post_data = ((last_edit_post.text, form_data.get('text')),
                                (last_edit_post.group.title,
-                                self.group_2.title),
+                                self.group_new.title),
                                (last_edit_post.author, self.user))
         for value, expected in last_edit_post_data:
             with self.subTest(value=value):
@@ -102,6 +107,7 @@ class PostFormTest(TestCase):
 
     def test_guest_client_post_create(self):
         """Создание поста неавторизованным пользователем."""
+        cache.clear()
         posts_count = Post.objects.count()
         response = self.client.post(
             reverse('posts:post_create'),
@@ -129,7 +135,7 @@ class CommentFormTest(TestCase):
 
     def test_authorized_client_add_comment(self):
         """Публикация коммента авторизованным пользователем."""
-        comments_count = Comment.objects.count()
+        cache.clear()
         form_data = {
             'author': self.user,
             'post': self.post,
@@ -143,6 +149,6 @@ class CommentFormTest(TestCase):
         )
         self.assertRedirects(
             response,
-            reverse('users:login') + f'?next=/posts/{self.post.id}/comment/'
+            reverse('posts:post_detail',
+                    kwargs={'post_id': self.post.id})
         )
-        self.assertEqual(Comment.objects.count(), comments_count)

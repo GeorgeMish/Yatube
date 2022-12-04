@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.core.cache import cache
 
 from ..models import Group, Post
 
@@ -40,7 +41,7 @@ class TaskURLTests(TestCase):
             f'/posts/{self.post.id}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
             f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
-            f'posts/{self.post.id}/comment/': 'posts/includes/comment.html',
+          #  f'posts/{self.post.id}/comment/': 'posts/includes/comment.html',
         }
         for address, template in templates_url_names.items():
             with self.subTest(address=address):
@@ -49,60 +50,70 @@ class TaskURLTests(TestCase):
 
     def test_index_page_not_login_user(self):
         """Главная страница доступна гостю."""
+        cache.clear()
         index_page = '/'
         response = self.client.get(index_page)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_group_page_not_login_user(self):
         """Просмотр групп доступен гостю."""
+        cache.clear()
         group_page = f'/group/{self.group.slug}/'
         response = self.client.get(group_page, args=[self.group.slug])
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_profile_page_not_login_user(self):
         """Просмотр чужого профиля доступен гостю."""
+        cache.clear()
         profile_page = f'/profile/{self.user.username}/'
         response = self.client.get(profile_page, args=[self.user.username])
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_page_not_login_user(self):
         """Просмотр чужого поста доступен гостю."""
+        cache.clear()
         post_page = f'/posts/{self.post.id}/'
         response = self.client.get(post_page)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_create_post_authorized_client(self):
         """Создавать пост может только авторизованный пользователь."""
+        cache.clear()
         create_post_page = '/create/'
         response = self.authorized_client.get(create_post_page)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_edit_post_author(self):
         """Редактирование поста автором."""
+        cache.clear()
         edit_post_page = f'/posts/{self.post.id}/edit/'
         response = self.authorized_client2.get(edit_post_page)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_edit_post_not_author(self):
         """Редактирование поста не автором."""
+        cache.clear()
         edit_post_page = f'/posts/{self.post.id}/edit/'
         response = self.authorized_client.get(edit_post_page)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_create_post_guest_redirect(self):
         """Редирект гостя при попытке создать пост."""
+        cache.clear()
         create_post_page = '/create/'
         response = self.client.get(create_post_page)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_edit_post_guest_redirect(self):
         """Редирект гостя при попытке редактировать пост."""
+        cache.clear()
         edit_post_page = f'/posts/{self.post.id}/edit/'
         response = self.client.get(edit_post_page)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_non_exist_page(self):
         """Тест на ошибку 404"""
+        cache.clear()
         unexisting_page = '/unexisting_page/'
         response = self.authorized_client.get(unexisting_page)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
@@ -111,6 +122,7 @@ class TaskURLTests(TestCase):
         """Страница для создания поста перенаправит анонимного
         пользователя на страницу логина.
         """
+        cache.clear()
         create_post_page = '/create/'
         response = self.client.get(create_post_page)
         self.assertRedirects(
@@ -120,6 +132,7 @@ class TaskURLTests(TestCase):
         """Страница для редактирования поста перенаправит анонимного
         пользователя на страницу логина.
         """
+        cache.clear()
         edit_post_page = f'/posts/{self.post.id}/edit/'
         response = self.client.get(edit_post_page)
         self.assertRedirects(
@@ -129,6 +142,7 @@ class TaskURLTests(TestCase):
         """Страница для редактирования поста перенаправит
         не автора на страницу поста.
         """
+        cache.clear()
         edit_post_page = f'/posts/{self.post.id}/edit/'
         response = self.authorized_client.get(edit_post_page)
         self.assertRedirects(
@@ -138,6 +152,7 @@ class TaskURLTests(TestCase):
         """Страница для комментирования поста перенаправит
         авторизованного пользователя на страницу поста.
         """
+        cache.clear()
         comment_post_page = f'/posts/{self.post.id}/comment/'
         response = self.authorized_client.get(comment_post_page)
         self.assertRedirects(
