@@ -3,8 +3,6 @@ from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = '6b+7h5g%=o@831092ses_s0ia_br#tj1(bf!7-kcgk*7k4(zp('
-
 DEBUG = True
 
 
