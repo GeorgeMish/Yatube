@@ -1,5 +1,5 @@
-from django.core.paginator import Paginator
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.paginator import Paginator
 
 from . import constants
 

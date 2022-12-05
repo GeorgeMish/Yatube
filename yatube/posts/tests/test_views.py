@@ -1,15 +1,14 @@
+import shutil
+import tempfile
+
+from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
-from django.conf import settings
-from django import forms
-import shutil
-import tempfile
 
-from ..import constants
-from ..models import Group, Post, User, Follow
-
+from ..models import Follow, Group, Post, User
 from ..utils import uploaded_img
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
