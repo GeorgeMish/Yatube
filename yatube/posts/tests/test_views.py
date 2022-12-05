@@ -9,7 +9,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from ..models import Follow, Group, Post, User
-from ..utils import uploaded_img
+from ..utils import uploaded_img, constants
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
