@@ -33,18 +33,11 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    post_list = (
-        Post.objects.select_related('group', 'author')
-        .filter(author=author).all()
-    )
+    post_list = author.posts.all()
     page_obj = get_page_context(post_list, request)
-    following = (
-        request.user.is_authenticated
-        and Follow.objects.filter(
-            user=request.user,
-            author=author,
-        ).exists()
-    )
+    following = (request.user.is_authenticated
+        and Follow.objects.filter(user=request.user,
+            author=author,).exists())
     context = {
         'author': author,
         'page_obj': page_obj,
@@ -95,11 +88,13 @@ def post_edit(request, post_id):
     if post_object.author != request.user:
         return redirect('posts:post_detail', post_id)
 
-    if request.method == 'POST' and form.is_valid():
+    form = PostForm(request.POST or None,
+                    files=request.FILES or None,
+                    instance=post_object)
+    if form.is_valid():
         form.save()
-        if post_object.author == request.user:
-            return redirect('posts:post_edit', post_id)
-        form = PostForm(instance=post_object)
+        return redirect('posts:post_edit', post_id)
+    form = PostForm(instance=post_object)
     context = {
         'form': form,
         'True': True,
