@@ -6,7 +6,7 @@
 ## Инструкции по установке
 ***- Клонируйте репозиторий:***
 ```
-git clone git@github.com:GeorgeMish/hw05_final.git
+git clone https://github.com/GeorgeMish/hw05_final.git
 ```
 ```
 cd hw05_final
