@@ -15,7 +15,7 @@ cd hw05_final
 ***- Установите и активируйте виртуальное окружение:***
 
 ```
-python -m venv venv
+python3 -m venv venv
 ```
 ```
 source venv/bin/activate
