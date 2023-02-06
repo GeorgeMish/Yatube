@@ -6,7 +6,7 @@
 ## Инструкции по установке
 ***- Клонируйте репозиторий:***
 ```
-git clone https://github.com/GeorgeMish/hw05_final.git
+git clone git@github.com:GeorgeMish/hw05_final.git
 ```
 ```
 cd hw05_final
@@ -15,7 +15,7 @@ cd hw05_final
 ***- Установите и активируйте виртуальное окружение:***
 
 ```
-python3 -m venv venv
+python3.9 -m venv venv
 ```
 ```
 source venv/bin/activate
@@ -28,12 +28,12 @@ pip install -r requirements.txt
 
 ***- Примените миграции:***
 ```
-python manage.py migrate
+python3 manage.py migrate
 ```
 
 ***- В папке с файлом manage.py выполните команду:***
 ```
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 **Авторизованные** пользователи могут:
